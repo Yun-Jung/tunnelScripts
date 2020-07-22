@@ -1,0 +1,15 @@
+Creating a VXLAN tunnel :
+Check if the eth0 IPs are pingable from each host.
+ovs-vsctl show
+ovs-vsctl add-br br-edgevpn
+Host1:
+ovs-vsctl add-port br-edgevpn vxlan0 -- set interface vxlan0 type=vxlan options:local_ip=<local eth0 IP>  options:remote_ip=<remote eth0 IP>
+Host2:
+ovs-vsctl add-port br-edgevpn vxlan0 -- set interface vxlan0 type=vxlan options:local_ip=<local eth0 IP> options:remote_ip=<remote eth0 IP>
+Host1: 
+ifconfig br-edgevpn 192.19.0.1/24
+ifconfig br-edgevpn 192.19.0.2/24
+
+ping 192.19.0.1/24 IP shown on bridge from Host2 and it is pingable as the tunnel is set up.
+For GRE tunnel same steps with type=gre
+ 
