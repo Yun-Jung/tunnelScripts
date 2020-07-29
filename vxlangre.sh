@@ -5,6 +5,7 @@ else
   echo "Please install openvswitch and make sure it is running."
   exit
 fi
+echo "Enter type of bridge[vxlan/gre]:" read -r type
 echo -e "Please enter the bridge name IP: "
 read -r bridge_name
 echo -e "Please enter the remote IP: "
@@ -22,7 +23,7 @@ else
   exit
 fi
 ip=$(ip route get 8.8.8.8 | sed -n '/src/{s/.*src *\([^ ]*\).*/\1/p;q}')
-if ovs-vsctl add-port $bridge_name vxlan0 -- set interface vxlan0 type=vxlan options:local_ip=$ip options:remote_ip=$remote_ip; then
+if ovs-vsctl add-port $bridge_name vxlan0 -- set interface vxlan0 type=$type options:local_ip=$ip options:remote_ip=$remote_ip; then
   echo "Created link on this host successfully."
 else
   echo "Failed to create VXLAN tunnel on this host."
