@@ -1,0 +1,54 @@
+Host1:
+generate root CA key:
+openssl genrsa -des3 -out rootCA.key 4096
+
+Host1:
+Create and self sign the Root Certificate:
+openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.crt
+
+Host1:
+openssl genrsa -out test1.key 2048
+
+Host2:
+openssl genrsa -out test2.key 2048
+
+Host1:
+openssl req -new -key test1.key -out test1.csr
+With CN as test1
+
+Host2:
+openssl req -new -key test2.key -out test2.csr
+
+Host1:
+openssl x509 -req -in test1.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out test1.crt -days 500 -sha256
+
+Host2:
+Copy test1.csr to host 1
+Generate the certificate for Host2 in host1 using:
+openssl x509 -req -in test2.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out test2.crt -days 500 -sha256 
+
+Copy test2.crt and rootCA.crt to Host2
+
+Host 1 :
+ovs-vsctl set Open_vSwitch . \
+        other_config:certificate=/root/test1.crt \
+        other_config:private_key=/root/test1.key \
+        other_config:ca_cert=/root/rootCA.crt
+ovs-vsctl add-port br-ipsec tun -- \
+         set interface tun type=gre \
+                       options:remote_ip=172.17.0.2 \
+                       options:remote_name=test2
+
+Host2:
+ovs-vsctl set Open_vSwitch . \
+        other_config:certificate=/root/test2.crt \
+        other_config:private_key=/root/test2.key \
+        other_config:ca_cert=/root/rootCA.crt
+
+
+ovs-vsctl add-port br-ipsec tun -- \
+         set interface tun type=gre \
+                       options:remote_ip=172.17.0.3 \
+                       options:remote_name=test1
+
+Done!
